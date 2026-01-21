@@ -252,8 +252,16 @@ function setupConnection(connection) {
     });
 }
 
+// --- Network Throttling ---
+let lastSentTime = 0;
+
 function sendData() {
     if (!conn) return;
+
+    // Limit to ~30fps to avoid flooding
+    const now = Date.now();
+    if (now - lastSentTime < 33) return;
+    lastSentTime = now;
 
     // Send my state
     // Host sends Player 1, Joiner sends Player 2
@@ -505,44 +513,71 @@ function decreaseTimer() {
     }
 }
 
-// --- Event Listeners (Local) ---
+// --- Event Listeners (Unified) ---
 window.addEventListener('keydown', (event) => {
+    // Determine which character I control
+    const amP1 = (!isOnline || isHost);
+
     switch (event.code) {
-        // Player 1 (Red)
-        case 'KeyD': keys.d.pressed = true; break;
-        case 'KeyA': keys.a.pressed = true; break;
-        case 'KeyW': keys.w.pressed = true; break;
-        case 'KeyS': keys.s.pressed = true; break;
-        case 'Space':
-            // Only attack if I own Player 1
-            if (!isOnline || isHost) player.attack();
+        case 'KeyD':
+        case 'ArrowRight':
+            if (amP1) keys.d.pressed = true;
+            else keys.ArrowRight.pressed = true;
             break;
 
-        // Player 2 (Blue)
-        case 'ArrowRight': keys.ArrowRight.pressed = true; break;
-        case 'ArrowLeft': keys.ArrowLeft.pressed = true; break;
-        case 'ArrowUp': keys.ArrowUp.pressed = true; break;
-        case 'ArrowDown': keys.ArrowDown.pressed = true; break;
+        case 'KeyA':
+        case 'ArrowLeft':
+            if (amP1) keys.a.pressed = true;
+            else keys.ArrowLeft.pressed = true;
+            break;
+
+        case 'KeyW':
+        case 'ArrowUp':
+            if (amP1) keys.w.pressed = true;
+            else keys.ArrowUp.pressed = true;
+            break;
+
+        case 'KeyS':
+        case 'ArrowDown':
+            if (amP1) keys.s.pressed = true;
+            else keys.ArrowDown.pressed = true; // P2 Block
+            break;
+
+        case 'Space':
         case 'Enter':
-            // Only attack if I own Player 2
-            if (!isOnline || !isHost) enemy.attack();
+            if (amP1) player.attack();
+            else enemy.attack();
             break;
     }
 });
 
 window.addEventListener('keyup', (event) => {
-    switch (event.code) {
-        // Player 1
-        case 'KeyD': keys.d.pressed = false; break;
-        case 'KeyA': keys.a.pressed = false; break;
-        case 'KeyW': keys.w.pressed = false; break;
-        case 'KeyS': keys.s.pressed = false; break;
+    const amP1 = (!isOnline || isHost);
 
-        // Player 2
-        case 'ArrowRight': keys.ArrowRight.pressed = false; break;
-        case 'ArrowLeft': keys.ArrowLeft.pressed = false; break;
-        case 'ArrowUp': keys.ArrowUp.pressed = false; break;
-        case 'ArrowDown': keys.ArrowDown.pressed = false; break;
+    switch (event.code) {
+        case 'KeyD':
+        case 'ArrowRight':
+            if (amP1) keys.d.pressed = false;
+            else keys.ArrowRight.pressed = false;
+            break;
+
+        case 'KeyA':
+        case 'ArrowLeft':
+            if (amP1) keys.a.pressed = false;
+            else keys.ArrowLeft.pressed = false;
+            break;
+
+        case 'KeyW':
+        case 'ArrowUp':
+            if (amP1) keys.w.pressed = false;
+            else keys.ArrowUp.pressed = false;
+            break;
+
+        case 'KeyS':
+        case 'ArrowDown':
+            if (amP1) keys.s.pressed = false;
+            else keys.ArrowDown.pressed = false;
+            break;
     }
 });
 
