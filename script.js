@@ -37,6 +37,100 @@ resizeCanvas();
 
 // --- Classes ---
 
+class Obstacle {
+    constructor(x, y, w, h, type) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.type = type; // 'TREE', 'BIRD'
+        this.markedForDeletion = false;
+    }
+
+    update() {
+        this.x -= gameSpeed;
+        if (this.x + this.w < 0) {
+            this.markedForDeletion = true;
+        }
+    }
+
+    draw() {
+        // Placeholder, overridden by subclasses
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y, this.w, this.h);
+    }
+}
+
+class Tree extends Obstacle {
+    constructor(x, y) {
+        super(x, y - 60, 40, 60, 'TREE'); // Tree sits on ground
+    }
+
+    draw() {
+        // Trunk
+        ctx.fillStyle = '#8D6E63'; // Brown
+        ctx.fillRect(this.x + 10, this.y + 20, 20, 40);
+
+        // Leaves (Triangle)
+        ctx.beginPath();
+        ctx.fillStyle = '#2E7D32'; // Green
+        ctx.moveTo(this.x + 20, this.y); // Top
+        ctx.lineTo(this.x, this.y + 40); // Bottom Left
+        ctx.lineTo(this.x + 40, this.y + 40); // Bottom Right
+        ctx.fill();
+    }
+}
+
+class Bird extends Obstacle {
+    constructor(x, y) {
+        super(x, y, 40, 30, 'BIRD');
+        this.velX = 2; // Moves faster than terrain (flies left)
+        this.wingState = 0;
+    }
+
+    update() {
+        super.update();
+        this.x -= this.velX; // Extra speed
+        this.wingState += 0.2; // Animate wings
+    }
+
+    draw() {
+        ctx.fillStyle = '#EF5350'; // Redbird
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(this.x + 20, this.y + 15, 20, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x + 10, this.y + 10, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(this.x + 10, this.y + 10, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wing (Flapping)
+        ctx.fillStyle = '#D32F2F';
+        ctx.beginPath();
+        const wingY = Math.sin(this.wingState) * 10;
+        ctx.moveTo(this.x + 20, this.y + 15);
+        ctx.lineTo(this.x + 10, this.y + 15 - 15 + wingY); // Wing tip
+        ctx.lineTo(this.x + 30, this.y + 15);
+        ctx.fill();
+
+        // Beak
+        ctx.fillStyle = 'orange';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y + 15);
+        ctx.lineTo(this.x - 10, this.y + 20);
+        ctx.lineTo(this.x + 5, this.y + 20);
+        ctx.fill();
+    }
+}
+
 class Player {
     constructor() {
         this.width = 40;
@@ -151,6 +245,7 @@ class Player {
 class TerrainManager {
     constructor() {
         this.segments = [];
+        this.obstacles = [];
         this.segmentWidth = 100; // Minimum width of a block
         // Initial ground
         this.addSegment(0, canvas.height - 100, canvas.width + 200, 100);
@@ -160,16 +255,28 @@ class TerrainManager {
         this.segments.push({ x, y, w, h });
     }
 
+    addObstacle(obs) {
+        this.obstacles.push(obs);
+    }
+
     update() {
         // Move segments
         for (let i = 0; i < this.segments.length; i++) {
             this.segments[i].x -= gameSpeed;
         }
 
+        // Move obstacles
+        for (let i = 0; i < this.obstacles.length; i++) {
+            this.obstacles[i].update();
+        }
+
         // Remove off-screen segments
         if (this.segments.length > 0 && this.segments[0].x + this.segments[0].w < 0) {
             this.segments.shift();
         }
+
+        // Remove off-screen obstacles
+        this.obstacles = this.obstacles.filter(obs => !obs.markedForDeletion);
 
         // Generate new segments
         const lastSegment = this.segments[this.segments.length - 1];
@@ -194,13 +301,28 @@ class TerrainManager {
             const newW = 200 + Math.random() * 300; // Random width
 
             this.addSegment(lastSegment.x + lastSegment.w + gapSize, newY, newW, 400); // 400 height to fill down
+
+            // Chance to spawn Bird over gap
+            if (Math.random() < 0.3) {
+                // Bird flies high
+                this.addObstacle(new Bird(lastSegment.x + lastSegment.w + gapSize + newW / 2, newY - 150));
+            }
+
         } else {
             // Continue ground directly connected
             let newY = lastSegment.y + (Math.random() * 60 - 30); // Small bump/step
             newY = Math.max(100, Math.min(canvas.height - 50, newY));
 
-            const newW = 100 + Math.random() * 200;
+            const newW = 300 + Math.random() * 300; // Longer ground for obstacles
             this.addSegment(lastSegment.x + lastSegment.w, newY, newW, 400);
+
+            // Chance to spawn obstacles on ground
+            if (newW > 150 && Math.random() < 0.5) {
+                // Add Tree
+                // Place it somewhere in the middle of the segment
+                const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
+                this.addObstacle(new Tree(obsX, newY));
+            }
         }
     }
 
@@ -212,6 +334,10 @@ class TerrainManager {
             ctx.fillStyle = '#388E3C';
             ctx.fillRect(seg.x, seg.y, seg.w, 10);
             ctx.fillStyle = '#4CAF50';
+        }
+
+        for (const obs of this.obstacles) {
+            obs.draw();
         }
     }
 }
@@ -273,6 +399,18 @@ function checkCollision() {
                 // Let's implement death on wall hit for "classic" difficulty.
                 // Actually simple logic: if x + width > seg.x (which is true here) AND y > seg.y, we are inside.
             }
+        }
+    }
+
+    // Check collision with OBSTACLES
+    for (const obs of terrainManager.obstacles) {
+        // Simple AABB Collision
+        if (player.x < obs.x + obs.w &&
+            player.x + player.width > obs.x &&
+            player.y < obs.y + obs.h &&
+            player.y + player.height > obs.y) {
+            // Hit obstacle
+            gameOver();
         }
     }
 }
