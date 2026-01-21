@@ -211,10 +211,9 @@ peer.on('open', (id) => {
 });
 
 peer.on('connection', (connection) => {
-    setupConnection(connection);
     isHost = true;
-    statusMsg.innerHTML = "Connected! You are HOST (Player 1)";
-    startGame();
+    statusMsg.innerHTML = "Opponent connecting... Initializing...";
+    setupConnection(connection);
 });
 
 peer.on('error', (err) => {
@@ -224,31 +223,40 @@ peer.on('error', (err) => {
 
 // UI Handlers
 document.getElementById('host-btn').addEventListener('click', () => {
-    // Just showing the ID is enough, peer is already open
     statusMsg.innerHTML = "Waiting for opponent... Share your ID.";
 });
 
 document.getElementById('join-btn').addEventListener('click', () => {
     let remoteId = document.getElementById('remote-id-input').value;
     if (remoteId) {
+        statusMsg.innerHTML = "Connecting to Host...";
         let connection = peer.connect(remoteId);
-        setupConnection(connection);
         isHost = false; // Joiner is Player 2
-        statusMsg.innerHTML = "Connected! You are PLAYER 2";
-        startGame();
+        setupConnection(connection);
     }
 });
 
 function setupConnection(connection) {
     conn = connection;
-    isOnline = true;
 
     conn.on('open', () => {
         console.log("Connection Established");
+        isOnline = true;
+        statusMsg.innerHTML = "Connected! Game Starting!";
+
+        // Wait a small moment to ensure both sides are ready (optional but safer)
+        setTimeout(() => {
+            startGame();
+        }, 500);
     });
 
     conn.on('data', (data) => {
         handleData(data);
+    });
+
+    conn.on('close', () => {
+        statusMsg.innerHTML = "Connection Closed.";
+        isOnline = false;
     });
 }
 
