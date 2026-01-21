@@ -226,6 +226,14 @@ document.getElementById('host-btn').addEventListener('click', () => {
     statusMsg.innerHTML = "Waiting for opponent... Share your ID.";
 });
 
+document.getElementById('copy-id-btn').addEventListener('click', () => {
+    if (myPeerId) {
+        navigator.clipboard.writeText(myPeerId).then(() => {
+            alert("ID Copied!");
+        });
+    }
+});
+
 document.getElementById('join-btn').addEventListener('click', () => {
     let remoteId = document.getElementById('remote-id-input').value;
     if (remoteId) {
@@ -233,6 +241,14 @@ document.getElementById('join-btn').addEventListener('click', () => {
         let connection = peer.connect(remoteId);
         isHost = false; // Joiner is Player 2
         setupConnection(connection);
+
+        // Timeout Catch
+        setTimeout(() => {
+            if (!isOnline) {
+                statusMsg.innerHTML = "Connection Timed Out. Check ID or Firewall.";
+                console.error("Connection Timed Out");
+            }
+        }, 10000);
     }
 });
 
@@ -252,6 +268,11 @@ function setupConnection(connection) {
 
     conn.on('data', (data) => {
         handleData(data);
+    });
+
+    conn.on('error', (err) => {
+        console.error("Connection Error:", err);
+        statusMsg.innerHTML = "Connection Error: " + err;
     });
 
     conn.on('close', () => {
