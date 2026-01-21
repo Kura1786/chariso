@@ -33,7 +33,8 @@ function resizeCanvas() {
     canvas.height = canvas.parentElement.clientHeight;
 }
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+resizeCanvas(); // Initial call
+
 
 // --- Classes ---
 
@@ -63,70 +64,103 @@ class Obstacle {
 
 class Tree extends Obstacle {
     constructor(x, y) {
-        super(x, y - 60, 40, 60, 'TREE'); // Tree sits on ground
+        super(x, y - 50, 40, 50, 'TREE'); // Pipe sits on ground
     }
 
     draw() {
-        // Trunk
-        ctx.fillStyle = '#8D6E63'; // Brown
-        ctx.fillRect(this.x + 10, this.y + 20, 20, 40);
+        // Green Pipe
+        ctx.fillStyle = '#43A047'; // Green
+        ctx.strokeStyle = '#1B5E20'; // Dark Green border
+        ctx.lineWidth = 2;
 
-        // Leaves (Triangle)
+        // Pipe Body
+        ctx.fillRect(this.x + 5, this.y + 20, 30, 30);
+        ctx.strokeRect(this.x + 5, this.y + 20, 30, 30);
+
+        // Pipe Rim (Top)
+        ctx.fillRect(this.x, this.y, 40, 20);
+        ctx.strokeRect(this.x, this.y, 40, 20);
+
+        // Piranha Plant (Simple)
+        // Stem
         ctx.beginPath();
-        ctx.fillStyle = '#2E7D32'; // Green
-        ctx.moveTo(this.x + 20, this.y); // Top
-        ctx.lineTo(this.x, this.y + 40); // Bottom Left
-        ctx.lineTo(this.x + 40, this.y + 40); // Bottom Right
+        ctx.moveTo(this.x + 20, this.y);
+        ctx.lineTo(this.x + 20, this.y - 10);
+        ctx.stroke();
+
+        // Head (Red with White spots)
+        ctx.fillStyle = '#E53935'; // Red
+        ctx.beginPath();
+        ctx.arc(this.x + 20, this.y - 20, 15, 0, Math.PI * 2); // Main head
         ctx.fill();
+        ctx.stroke();
+
+        // Mouth (Cutout)
+        ctx.fillStyle = 'white'; // White mouth sector
+        ctx.beginPath();
+        ctx.moveTo(this.x + 20, this.y - 20);
+        ctx.arc(this.x + 20, this.y - 20, 15, 0.2, 1.2);
+        ctx.lineTo(this.x + 20, this.y - 20);
+        ctx.fill();
+
+        // Teeth (optional detail, maybe too small)
     }
 }
 
 class Bird extends Obstacle {
     constructor(x, y) {
-        super(x, y, 40, 30, 'BIRD');
-        this.velX = 2; // Moves faster than terrain (flies left)
+        super(x, y, 35, 35, 'BIRD'); // Slightly smaller hitbox for turtle
+        this.velX = 3; // Paratroopa is fast
         this.wingState = 0;
     }
 
     update() {
         super.update();
-        this.x -= this.velX; // Extra speed
-        this.wingState += 0.2; // Animate wings
+        this.x -= this.velX;
+        this.wingState += 0.2;
+        this.y += Math.sin(this.wingState) * 2; // Bobbing up and down
     }
 
     draw() {
-        ctx.fillStyle = '#EF5350'; // Redbird
+        // Green Flying Turtle (Paratroopa)
+        const centerX = this.x + 17;
+        const centerY = this.y + 17;
 
-        // Body
+        // Shell
+        ctx.fillStyle = '#E53935'; // Red Shell
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(this.x + 20, this.y + 15, 20, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(centerX, centerY, 15, 12, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
+
+        // Head
+        ctx.fillStyle = '#FFCC80'; // Skin color
+        ctx.beginPath();
+        ctx.arc(centerX - 12, centerY - 10, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
 
         // Eye
-        ctx.fillStyle = 'white';
-        ctx.beginPath();
-        ctx.arc(this.x + 10, this.y + 10, 5, 0, Math.PI * 2);
-        ctx.fill();
         ctx.fillStyle = 'black';
         ctx.beginPath();
-        ctx.arc(this.x + 10, this.y + 10, 2, 0, Math.PI * 2);
+        ctx.arc(centerX - 15, centerY - 12, 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Wing (Flapping)
-        ctx.fillStyle = '#D32F2F';
+        // Wing (White)
+        ctx.fillStyle = '#FFF';
         ctx.beginPath();
-        const wingY = Math.sin(this.wingState) * 10;
-        ctx.moveTo(this.x + 20, this.y + 15);
-        ctx.lineTo(this.x + 10, this.y + 15 - 15 + wingY); // Wing tip
-        ctx.lineTo(this.x + 30, this.y + 15);
+        const wingOffset = Math.sin(this.wingState) * 8;
+        ctx.ellipse(centerX + 5, centerY - 15 + wingOffset, 8, 12, -0.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
 
-        // Beak
-        ctx.fillStyle = 'orange';
+        // Body/Feet
+        ctx.fillStyle = '#FFCC80';
         ctx.beginPath();
-        ctx.moveTo(this.x, this.y + 15);
-        ctx.lineTo(this.x - 10, this.y + 20);
-        ctx.lineTo(this.x + 5, this.y + 20);
+        ctx.arc(centerX - 5, centerY + 10, 5, 0, Math.PI * 2); // Front foot
+        ctx.arc(centerX + 10, centerY + 10, 5, 0, Math.PI * 2); // Back foot
         ctx.fill();
     }
 }
@@ -170,7 +204,9 @@ class Player {
     }
 
     draw() {
-        // Simple Stick-figure Bike
+        // Keeps the Bike (Request was to keep generic bike-run feel but mario enemies)
+        // Just refining it slightly to pop against the new background if needed.
+
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
@@ -193,8 +229,8 @@ class Player {
 
         // Draw Frame
         ctx.beginPath();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#1565C0'; // Blue frame for contrast
+        ctx.lineWidth = 4;
 
         // Rear axle to Seat post
         ctx.moveTo(rearWheelX, wheelY);
@@ -224,16 +260,17 @@ class Player {
 
         ctx.stroke();
 
-        // Simple Rider (Optional, maybe just a head)
+        // Simple Rider
         ctx.beginPath();
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = '#000'; // Shadowy rider
         // Head
         ctx.arc(this.x + 20, this.y - 10, 8, 0, Math.PI * 2);
         ctx.fill();
 
         // Body
         ctx.beginPath();
-        ctx.strokeStyle = '#000';
+        ctx.strokeStyle = '#444'; // Grey suit
+        ctx.lineWidth = 3;
         ctx.moveTo(this.x + 20, this.y - 2); // Neck
         ctx.lineTo(this.x + 15, this.y + 15); // Back to seat
         ctx.moveTo(this.x + 20, this.y - 2);
@@ -327,13 +364,40 @@ class TerrainManager {
     }
 
     draw() {
-        ctx.fillStyle = '#4CAF50';
+        // Checkered Brick Pattern (Simulated)
+        // In a real game we'd use an image, but drawing rects works for now
+
         for (const seg of this.segments) {
+            // Main Block
+            ctx.fillStyle = '#D86B45'; // Brick Orange
             ctx.fillRect(seg.x, seg.y, seg.w, seg.h);
-            // Top grass border
-            ctx.fillStyle = '#388E3C';
-            ctx.fillRect(seg.x, seg.y, seg.w, 10);
-            ctx.fillStyle = '#4CAF50';
+
+            // Mortar lines (Grid)
+            ctx.strokeStyle = '#8D4D2F';
+            ctx.lineWidth = 2;
+            const blockSize = 40;
+
+            // Vertical lines
+            for (let bx = 0; bx < seg.w; bx += blockSize) {
+                ctx.beginPath();
+                ctx.moveTo(seg.x + bx, seg.y);
+                ctx.lineTo(seg.x + bx, seg.y + seg.h);
+                ctx.stroke();
+            }
+            // Horizontal lines
+            for (let by = 0; by < seg.h; by += blockSize) {
+                ctx.beginPath();
+                ctx.moveTo(seg.x, seg.y + by);
+                ctx.lineTo(seg.x + seg.w, seg.y + by);
+                ctx.stroke();
+            }
+
+            // Top grass border - Keeping it for clarity, or removing for "Brick" feel
+            // Let's keep it as a "Grass top" like Mario 1-1 ground
+            ctx.fillStyle = '#5C94FC'; // No, Mario ground is brown. Grass top is green for hills.
+            // Let's just do a dark border top
+            ctx.fillStyle = '#6D4C41';
+            ctx.fillRect(seg.x, seg.y, seg.w, 5);
         }
 
         for (const obs of this.obstacles) {
@@ -486,7 +550,6 @@ restartBtn.addEventListener('click', () => {
     initGame();
     gameState = 'PLAYING';
     startScreen.classList.add('hidden');
-    gameOverScreen.classList.remove('hidden'); // Wait, should remove hidden class or add it? We hide it.
     gameOverScreen.classList.add('hidden');
     loop();
 });
