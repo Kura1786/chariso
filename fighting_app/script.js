@@ -201,12 +201,15 @@ class Fighter {
 let peer = null;
 let myPeerId = null;
 
-// Init Peer with Google STUN Server for better connectivity
+// Init Peer with Multiple Google STUN Servers
 peer = new Peer(null, {
     config: {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' }
         ]
     }
 });
@@ -262,16 +265,24 @@ document.getElementById('join-btn').addEventListener('click', () => {
 function setupConnection(connection) {
     conn = connection;
 
-    conn.on('open', () => {
+    const onOpen = () => {
+        if (isOnline) return; // Prevent double trigger
         console.log("Connection Established");
         isOnline = true;
         statusMsg.innerHTML = "Connected! Game Starting!";
 
-        // Wait a small moment to ensure both sides are ready (optional but safer)
+        // Wait a small moment to ensure both sides are ready
         setTimeout(() => {
             startGame();
         }, 500);
-    });
+    };
+
+    // Handle race condition where 'open' might already be true
+    if (conn.open) {
+        onOpen();
+    }
+
+    conn.on('open', onOpen);
 
     conn.on('data', (data) => {
         handleData(data);
@@ -286,6 +297,13 @@ function setupConnection(connection) {
         statusMsg.innerHTML = "Connection Closed.";
         isOnline = false;
     });
+
+    // Safety Timeout for Firewall / NAT issues
+    setTimeout(() => {
+        if (!isOnline) {
+            statusMsg.innerHTML = "Connection taking too long... Firewall might be blocking P2P.";
+        }
+    }, 15000);
 }
 
 // --- Network Throttling ---
