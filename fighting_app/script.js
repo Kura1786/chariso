@@ -201,8 +201,15 @@ class Fighter {
 let peer = null;
 let myPeerId = null;
 
-// Init Peer
-peer = new Peer();
+// Init Peer with Google STUN Server for better connectivity
+peer = new Peer(null, {
+    config: {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+    }
+});
 
 peer.on('open', (id) => {
     myPeerId = id;
