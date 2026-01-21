@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Fighting Game</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Health Bars -->
+        <div id="ui-layer">
+            <div id="player1-health-bar">
+                <div id="player1-health"></div>
+            </div>
+            <div id="timer">60</div>
+            <div id="player2-health-bar">
+                <div id="player2-health"></div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="screen">
+            <h1>FIGHTING GAME</h1>
+            <div class="menu-options">
+                <button id="local-btn">ローカル対戦 (1台で遊ぶ)</button>
+                <hr>
+                <div class="online-section">
+                    <button id="host-btn">ホストになる (部屋を作る)</button>
+                    <p>My ID: <span id="my-peer-id">...</span></p>
+                    <div class="join-container">
+                        <input type="text" id="remote-id-input" placeholder="相手のIDを入力">
+                        <button id="join-btn">参加する</button>
+                    </div>
+                </div>
+            </div>
+            <div id="status-msg"></div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen hidden">
+            <h1 id="result-text">PLAYER 1 WINS</h1>
+            <button id="restart-btn">もう一度</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
