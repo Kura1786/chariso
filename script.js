@@ -390,6 +390,27 @@ class Rhino extends Obstacle {
         this.x -= (gameSpeed + this.chargeSpeed);
 
         if (this.x + this.w < 0) this.markedForDeletion = true;
+
+        // Follow Ground Logic
+        // Find segment under Rhino
+        let groundFound = false;
+        // Access global terrainManager
+        if (typeof terrainManager !== 'undefined') {
+            for (const seg of terrainManager.segments) {
+                // Check if Rhino's center is within segment horizontal bounds
+                const centerX = this.x + this.w / 2;
+                if (centerX >= seg.x && centerX <= seg.x + seg.w) {
+                    // Snap to ground
+                    this.y = seg.y - this.h;
+                    groundFound = true;
+                    break;
+                }
+            }
+        }
+
+        if (!groundFound) {
+            this.y += 10; // Fall if no ground (gap)
+        }
     }
 
     draw() {
