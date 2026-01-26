@@ -195,77 +195,72 @@ class Tree extends Obstacle {
         // Head (Red with White spots)
         ctx.fillStyle = '#E53935'; // Red
         ctx.beginPath();
-        ctx.arc(this.x + 20, this.y - 20, 15, 0, Math.PI * 2); // Main head
+        ctx.lineTo(this.x + 35, this.y + 20);
         ctx.fill();
-        ctx.stroke();
 
-        // Mouth (Cutout)
-        ctx.fillStyle = 'white'; // White mouth sector
+        // Top Layer
         ctx.beginPath();
-        ctx.moveTo(this.x + 20, this.y - 20);
-        ctx.arc(this.x + 20, this.y - 20, 15, 0.2, 1.2);
+        ctx.moveTo(this.x + 10, this.y + 5);
         ctx.lineTo(this.x + 20, this.y - 20);
+        ctx.lineTo(this.x + 30, this.y + 5);
         ctx.fill();
-
-        // Teeth (optional detail, maybe too small)
     }
 }
 
 class Bird extends Obstacle {
     constructor(x, y) {
-        super(x, y, 35, 35, 'BIRD'); // Slightly smaller hitbox for turtle
-        this.velX = 3; // Paratroopa is fast
+        super(x, y, 40, 30, 'BIRD');
+        this.velX = 3;
         this.wingState = 0;
     }
 
     update() {
-        super.update();
-        this.x -= this.velX;
-        this.wingState += 0.2;
-        this.y += Math.sin(this.wingState) * 2; // Bobbing up and down
+        this.x -= (gameSpeed + 1.5);
+        this.wingState += 0.25; // Faster flap
+        this.y += Math.sin(this.wingState) * 3;
+
+        if (this.x + this.w < 0) this.markedForDeletion = true;
     }
 
     draw() {
-        // Green Flying Turtle (Paratroopa)
-        const centerX = this.x + 17;
-        const centerY = this.y + 17;
+        const centerX = this.x + 20;
+        const centerY = this.y + 15;
 
-        // Shell
-        ctx.fillStyle = '#E53935'; // Red Shell
+        // Visual: Crow / Dark Bird
+        ctx.fillStyle = '#212121'; // Black/Grey
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, 18, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye (White with red pupil)
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(centerX - 10, centerY - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(centerX - 11, centerY - 5, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Beak (Sharp Yellow)
+        ctx.fillStyle = '#FFC107';
+        ctx.beginPath();
+        ctx.moveTo(centerX - 15, centerY + 2);
+        ctx.lineTo(centerX - 28, centerY + 5); // Pointy beak
+        ctx.lineTo(centerX - 15, centerY + 8);
+        ctx.fill();
+
+        // Wing (Flapping)
+        ctx.fillStyle = '#424242'; // Dark Grey Wing
         ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.ellipse(centerX, centerY, 15, 12, 0, 0, Math.PI * 2);
+        const wingY = centerY - 5 + Math.sin(this.wingState) * 12; // Big flap
+        ctx.ellipse(centerX + 2, wingY, 12, 6, -0.2, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
-
-        // Head
-        ctx.fillStyle = '#FFCC80'; // Skin color
-        ctx.beginPath();
-        ctx.arc(centerX - 12, centerY - 10, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Eye
-        ctx.fillStyle = 'black';
-        ctx.beginPath();
-        ctx.arc(centerX - 15, centerY - 12, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Wing (White)
-        ctx.fillStyle = '#FFF';
-        ctx.beginPath();
-        const wingOffset = Math.sin(this.wingState) * 8;
-        ctx.ellipse(centerX + 5, centerY - 15 + wingOffset, 8, 12, -0.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Body/Feet
-        ctx.fillStyle = '#FFCC80';
-        ctx.beginPath();
-        ctx.arc(centerX - 5, centerY + 10, 5, 0, Math.PI * 2); // Front foot
-        ctx.arc(centerX + 10, centerY + 10, 5, 0, Math.PI * 2); // Back foot
-        ctx.fill();
     }
 }
 
