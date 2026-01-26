@@ -530,49 +530,28 @@ class TerrainManager {
                     const obsX = lastSegment.x + lastSegment.w + newW - 50;
                     this.addObstacle(new Rhino(obsX, newY));
                 }
-                // Tree (Normal)
+                // Rock (Normal)
                 else if (roll < 0.6) {
                     const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
-                    this.addObstacle(new Tree(obsX, newY));
+                    this.addObstacle(new Rock(obsX, newY));
                 }
             }
         }
     }
 
     draw() {
-        // Checkered Brick Pattern (Simulated)
-        // In a real game we'd use an image, but drawing rects works for now
-
+        // Grassland Style
         for (const seg of this.segments) {
-            // Main Block
-            ctx.fillStyle = '#D86B45'; // Brick Orange
+            // Main Block (Dirt/Soil)
+            ctx.fillStyle = '#5D4037'; // Dirt Brown
             ctx.fillRect(seg.x, seg.y, seg.w, seg.h);
 
-            // Mortar lines (Grid)
-            ctx.strokeStyle = '#8D4D2F';
-            ctx.lineWidth = 2;
-            const blockSize = 40;
+            // Grass Top
+            ctx.fillStyle = '#4CAF50'; // Grass Green
+            ctx.fillRect(seg.x, seg.y, seg.w, 20);
 
-            // Vertical lines
-            for (let bx = 0; bx < seg.w; bx += blockSize) {
-                ctx.beginPath();
-                ctx.moveTo(seg.x + bx, seg.y);
-                ctx.lineTo(seg.x + bx, seg.y + seg.h);
-                ctx.stroke();
-            }
-            // Horizontal lines
-            for (let by = 0; by < seg.h; by += blockSize) {
-                ctx.beginPath();
-                ctx.moveTo(seg.x, seg.y + by);
-                ctx.lineTo(seg.x + seg.w, seg.y + by);
-                ctx.stroke();
-            }
-
-            // Top grass border - Keeping it for clarity, or removing for "Brick" feel
-            // Let's keep it as a "Grass top" like Mario 1-1 ground
-            ctx.fillStyle = '#5C94FC'; // No, Mario ground is brown. Grass top is green for hills.
-            // Let's just do a dark border top
-            ctx.fillStyle = '#6D4C41';
+            // Grass details (lighter edge)
+            ctx.fillStyle = '#81C784';
             ctx.fillRect(seg.x, seg.y, seg.w, 5);
         }
 
