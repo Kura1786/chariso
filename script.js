@@ -120,7 +120,7 @@ async function submitScore() {
 fetchLeaderboard();
 
 // Submit Listener
-document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+document.getElementById('submit-score-btn').addEventListener('click', () => submitScore(false));
 
 // --- Feedback Logic ---
 async function submitFeedback() {
