@@ -27,11 +27,29 @@ async function fetchLeaderboard() {
         const querySnapshot = await getDocs(q);
 
         list.innerHTML = '';
+        let rank = 1;
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const li = document.createElement('li');
-            li.textContent = `${data.score} - ${data.name}`;
+
+            let rankIcon = `${rank}.`;
+            let rankClass = '';
+
+            if (rank === 1) {
+                rankIcon = '👑';
+                rankClass = 'rank-1';
+            } else if (rank === 2) {
+                rankIcon = '🥈';
+                rankClass = 'rank-2';
+            } else if (rank === 3) {
+                rankIcon = '🥉';
+                rankClass = 'rank-3';
+            }
+
+            li.className = rankClass;
+            li.innerHTML = `<span class="rank-icon">${rankIcon}</span> <span class="score-val">${data.score}</span> - ${data.name}`;
             list.appendChild(li);
+            rank++;
         });
 
         if (querySnapshot.empty) {
@@ -368,9 +386,9 @@ class Player {
 
 class Rhino extends Obstacle {
     constructor(x, y) {
-        // Rhino is short and wide
-        super(x, y - 35, 50, 35, 'RHINO');
-        this.chargeSpeed = 4; // Extra speed added to scrolling
+        // Rhino Buff: Bigger and Faster
+        super(x, y - 45, 60, 45, 'RHINO');
+        this.chargeSpeed = 6; // Speed up to 1.5x (was 4)
     }
 
     update() {
@@ -380,7 +398,6 @@ class Rhino extends Obstacle {
         if (this.x + this.w < 0) this.markedForDeletion = true;
 
         // Follow Ground Logic
-        // Find segment under Rhino
         let groundFound = false;
         // Access global terrainManager
         if (typeof terrainManager !== 'undefined') {
@@ -404,32 +421,108 @@ class Rhino extends Obstacle {
     draw() {
         // Gray Body
         ctx.fillStyle = '#9E9E9E';
-        ctx.fillRect(this.x, this.y, 50, 30);
+        ctx.fillRect(this.x, this.y, 60, 40); // Bigger body
 
         // Legs
         ctx.fillStyle = '#616161';
-        ctx.fillRect(this.x + 5, this.y + 30, 10, 5);
-        ctx.fillRect(this.x + 35, this.y + 30, 10, 5);
+        ctx.fillRect(this.x + 5, this.y + 40, 15, 5);
+        ctx.fillRect(this.x + 40, this.y + 40, 15, 5);
 
         // Head/Horn area
         ctx.fillStyle = '#BDBDBD';
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x - 10, this.y + 10); // Horn tip
-        ctx.lineTo(this.x, this.y + 20);
+        ctx.lineTo(this.x - 15, this.y + 15); // Longer horn
+        ctx.lineTo(this.x, this.y + 30);
         ctx.fill();
 
         // Eye
-        ctx.fillStyle = 'black';
-        ctx.fillRect(this.x + 2, this.y + 5, 3, 3);
+        ctx.fillStyle = 'red'; // Angry
+        ctx.fillRect(this.x + 5, this.y + 10, 5, 5);
 
         // Dust effect (simple circles behind)
         if (frames % 10 < 5) {
             ctx.fillStyle = '#E0E0E0';
             ctx.beginPath();
-            ctx.arc(this.x + 55, this.y + 30, 5, 0, Math.PI * 2);
+            ctx.arc(this.x + 65, this.y + 40, 8, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
+}
+
+class Rabbit extends Obstacle {
+    constructor(x, y) {
+        super(x, y - 40, 40, 40, 'RABBIT');
+        this.velY = 0;
+        this.isGrounded = true;
+        this.jumpTimer = Math.random() * 100; // Randomize start
+    }
+
+    update() {
+        this.x -= gameSpeed;
+
+        // Jump Logic
+        if (this.isGrounded) {
+            this.jumpTimer++;
+            if (this.jumpTimer > 100) { // Jump every ~100 frames
+                this.velY = -12; // Big Jump
+                this.isGrounded = false;
+                this.jumpTimer = 0;
+            }
+        } else {
+            // Gravity
+            this.velY += GRAVITY;
+            this.y += this.velY;
+
+            // Landing (Simple Ground Check)
+            if (typeof terrainManager !== 'undefined') {
+                for (const seg of terrainManager.segments) {
+                    const centerX = this.x + this.w / 2;
+                    if (centerX >= seg.x && centerX <= seg.x + seg.w) {
+                        if (this.y + this.h >= seg.y && this.velY > 0) {
+                            this.y = seg.y - this.h;
+                            this.velY = 0;
+                            this.isGrounded = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (this.x + this.w < 0) this.markedForDeletion = true;
+    }
+
+    draw() {
+        const centerX = this.x + 20;
+        const centerY = this.y + 20;
+
+        // Body (White)
+        ctx.fillStyle = '#FFF';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + 5, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears
+        ctx.fillStyle = '#FFCDD2'; // Pinkish
+        ctx.beginPath();
+        ctx.ellipse(centerX - 5, centerY - 15, 5, 12, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX + 5, centerY - 15, 5, 12, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Face
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(centerX - 5, centerY, 2, 0, Math.PI * 2); // Eye
+        ctx.arc(centerX + 5, centerY, 2, 0, Math.PI * 2); // Eye
+        ctx.fill();
+
+        ctx.fillStyle = '#F48FB1'; // Nose
+        ctx.beginPath();
+        ctx.arc(centerX, centerY + 5, 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
@@ -514,12 +607,16 @@ class TerrainManager {
 
                 // Rhino on Long Ground (High Priority)
                 if (newW > 400 && roll < 0.3) {
-                    // Charge from right side of segment
                     const obsX = lastSegment.x + lastSegment.w + newW - 50;
                     this.addObstacle(new Rhino(obsX, newY));
                 }
+                // Rabbit (Jumper)
+                else if (roll < 0.5) {
+                    const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
+                    this.addObstacle(new Rabbit(obsX, newY));
+                }
                 // Rock (Normal)
-                else if (roll < 0.6) {
+                else if (roll < 0.8) {
                     const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
                     this.addObstacle(new Rock(obsX, newY));
                 }
