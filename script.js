@@ -102,6 +102,9 @@ async function submitScore() {
             alert("Score Registered!");
         }
 
+        // Save name for next time
+        localStorage.setItem('chariso_username', name);
+
         document.getElementById('score-submit-area').style.display = 'none'; // Hide input
         fetchLeaderboard(); // Refresh
     } catch (e) {
@@ -775,7 +778,14 @@ function initGame() {
 
     // Reset UI for ranking
     document.getElementById('score-submit-area').style.display = 'block';
-    document.getElementById('player-name').value = '';
+
+    // Auto-fill name if saved
+    const savedName = localStorage.getItem('chariso_username');
+    if (savedName) {
+        document.getElementById('player-name').value = savedName;
+    } else {
+        document.getElementById('player-name').value = '';
+    }
 }
 
 // --- Main Loop ---
