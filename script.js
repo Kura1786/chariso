@@ -695,7 +695,9 @@ class TerrainManager {
         for (const seg of this.segments) {
             // Main Block (Dirt/Soil)
             ctx.fillStyle = '#5D4037'; // Dirt Brown
-            ctx.fillRect(seg.x, seg.y, seg.w, seg.h);
+            // Extend to bottom of canvas to avoid gaps on mobile resize
+            const fillHeight = Math.max(seg.h, canvas.height - seg.y + 50);
+            ctx.fillRect(seg.x, seg.y, seg.w, fillHeight);
 
             // Grass Top
             ctx.fillStyle = '#4CAF50'; // Grass Green
