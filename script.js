@@ -926,6 +926,18 @@ function gameOver() {
     cancelAnimationFrame(requestId);
     finalScoreEl.textContent = score;
     gameOverScreen.classList.remove('hidden');
+
+    // Auto-check high score if name is saved
+    const savedName = localStorage.getItem('chariso_username');
+    const statusMsg = document.getElementById('status-msg');
+    statusMsg.textContent = ""; // Clear old message
+
+    if (savedName) {
+        document.getElementById('player-name').value = savedName;
+        submitScore(true); // Auto-submit in silent mode
+    } else {
+        document.getElementById('player-name').value = '';
+    }
 }
 
 // --- Input Handling ---
