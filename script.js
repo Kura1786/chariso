@@ -119,6 +119,38 @@ fetchLeaderboard();
 // Submit Listener
 document.getElementById('submit-score-btn').addEventListener('click', submitScore);
 
+// --- Feedback Logic ---
+async function submitFeedback() {
+    const input = document.getElementById('feedback-input');
+    const msg = input.value.trim();
+    const btn = document.getElementById('send-feedback-btn');
+
+    if (!msg) {
+        alert("Please write something!");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+        await addDoc(collection(db, "feedback"), {
+            message: msg,
+            date: new Date().toISOString()
+        });
+        alert("Thank you for your feedback!");
+        input.value = "";
+    } catch (e) {
+        console.error("Error sending feedback: ", e);
+        alert("Error sending. Try again later.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Send";
+    }
+}
+
+document.getElementById('send-feedback-btn').addEventListener('click', submitFeedback);
+
 
 /**
  * Chariso Game
