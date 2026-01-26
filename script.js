@@ -744,8 +744,6 @@ class TerrainManager {
 }
 
 // --- Global Objects ---
-let player;
-let terrainManager;
 let lastMilestone = 0;
 
 function initGame() {
