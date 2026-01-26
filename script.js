@@ -182,9 +182,29 @@ let gameSpeed = SPEED;
 let requestId = null;
 
 // Resize canvas to fit container
+// Resize canvas to fit container
 function resizeCanvas() {
+    const oldHeight = canvas.height;
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight;
+
+    // Shift entities if game is initialized and height changed
+    if (oldHeight && oldHeight !== canvas.height && typeof terrainManager !== 'undefined' && typeof player !== 'undefined') {
+        const deltaY = canvas.height - oldHeight;
+
+        // Shift Player
+        player.y += deltaY;
+
+        // Shift Terrain
+        for (const seg of terrainManager.segments) {
+            seg.y += deltaY;
+        }
+
+        // Shift Obstacles
+        for (const obs of terrainManager.obstacles) {
+            obs.y += deltaY;
+        }
+    }
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas(); // Initial call
