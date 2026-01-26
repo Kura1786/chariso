@@ -420,8 +420,10 @@ class TerrainManager {
 
             // Chance to spawn Bird over gap
             if (Math.random() < 0.3) {
-                // Bird flies high
-                this.addObstacle(new Bird(lastSegment.x + lastSegment.w + gapSize + newW / 2, newY - 150));
+                // Bird flies high, but keep it on screen (min Y=50)
+                // Fix: Prevent "Ceiling Death" by clamping bird height
+                const birdY = Math.max(50, newY - 150);
+                this.addObstacle(new Bird(lastSegment.x + lastSegment.w + gapSize + newW / 2, birdY));
             }
 
         } else {
