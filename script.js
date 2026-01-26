@@ -474,7 +474,7 @@ class TerrainManager {
         }
 
         // Remove off-screen segments
-        if (this.segments.length > 0 && this.segments[0].x + this.segments[0].w < 0) {
+        while (this.segments.length > 0 && this.segments[0].x + this.segments[0].w < 0) {
             this.segments.shift();
         }
 
@@ -581,9 +581,19 @@ function initGame() {
 function loop() {
     if (gameState !== 'PLAYING') return;
 
-    update();
-    draw();
-    requestId = requestAnimationFrame(loop);
+    try {
+        update();
+        draw();
+        requestId = requestAnimationFrame(loop);
+    } catch (e) {
+        console.error("Game Crashed:", e);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '20px sans-serif';
+        ctx.fillText("Game Error: " + e.message, 50, canvas.height / 2);
+        gameState = 'ERROR';
+    }
 }
 
 function update() {
