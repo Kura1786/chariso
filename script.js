@@ -697,7 +697,8 @@ canvas.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 // --- Button Listeners ---
-startBtn.addEventListener('click', () => {
+startBtn.addEventListener('click', function () {
+    this.blur(); // Remove focus to prevent Space key from triggering click again
     initGame();
     gameState = 'PLAYING';
     startScreen.classList.add('hidden');
@@ -705,7 +706,8 @@ startBtn.addEventListener('click', () => {
     loop();
 });
 
-restartBtn.addEventListener('click', () => {
+restartBtn.addEventListener('click', function () {
+    this.blur(); // Remove focus
     initGame();
     gameState = 'PLAYING';
     startScreen.classList.add('hidden');
