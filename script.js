@@ -175,13 +175,15 @@ const SPEED = 5;
 const DOUBLE_JUMP_FORCE = -10;
 
 // Game State
+// Game State
 let gameState = 'START'; // START, PLAYING, GAME_OVER
 let frames = 0;
 let score = 0;
 let gameSpeed = SPEED;
 let requestId = null;
+let player;
+let terrainManager;
 
-// Resize canvas to fit container
 // Resize canvas to fit container
 function resizeCanvas() {
     const oldHeight = canvas.height;
@@ -189,22 +191,15 @@ function resizeCanvas() {
     canvas.height = canvas.parentElement.clientHeight;
 
     // Shift entities if game is initialized and height changed
-    if (oldHeight && oldHeight !== canvas.height && typeof terrainManager !== 'undefined' && typeof player !== 'undefined') {
-        const deltaY = canvas.height - oldHeight;
-
-        // Shift Player
-        player.y += deltaY;
-
-        // Shift Terrain
-        for (const seg of terrainManager.segments) {
-            seg.y += deltaY;
+    // Use try-catch to be extra safe against TDZ if variables moved again
+    try {
+        if (oldHeight && oldHeight !== canvas.height && player && terrainManager) {
+            const deltaY = canvas.height - oldHeight;
+            player.y += deltaY;
+            for (const seg of terrainManager.segments) seg.y += deltaY;
+            for (const obs of terrainManager.obstacles) obs.y += deltaY;
         }
-
-        // Shift Obstacles
-        for (const obs of terrainManager.obstacles) {
-            obs.y += deltaY;
-        }
-    }
+    } catch (e) { console.log("Resize safety catch"); }
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas(); // Initial call
@@ -718,8 +713,7 @@ class TerrainManager {
 }
 
 // --- Global Objects ---
-let player;
-let terrainManager;
+// (Variables moved to top)
 
 function initGame() {
     player = new Player();
