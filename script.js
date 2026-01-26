@@ -787,8 +787,15 @@ function update() {
     scoreEl.textContent = score;
 
     // Milestone Check (Score Signs)
-    if (score >= lastMilestone + 100) {
-        lastMilestone += 100;
+    // Spawn earlier so it arrives roughly when score matches the number
+    // Distance from spawn (approx canvas.width + 200) to player (100) is approx canvas.width + 100
+    // Time = Distance / Speed. Score = Time / 10.
+    const nextMilestone = lastMilestone + 100;
+    const distToTravel = canvas.width + 100;
+    const scoreLead = distToTravel / gameSpeed / 10;
+
+    if (score + scoreLead >= nextMilestone) {
+        lastMilestone = nextMilestone;
         terrainManager.spawnSign(lastMilestone);
     }
 
