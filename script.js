@@ -462,31 +462,49 @@ class Rabbit extends Obstacle {
     update() {
         this.x -= (gameSpeed + this.speed);
 
-        // Jump Logic
+        // Ground Check (Always check to follow terrain)
+        let groundFound = false;
+        let groundY = 0;
+
+        if (typeof terrainManager !== 'undefined') {
+            for (const seg of terrainManager.segments) {
+                const centerX = this.x + this.w / 2;
+                if (centerX >= seg.x && centerX <= seg.x + seg.w) {
+                    groundY = seg.y;
+                    groundFound = true;
+                    break;
+                }
+            }
+        }
+
         if (this.isGrounded) {
-            this.jumpTimer++;
-            if (this.jumpTimer > 100) { // Jump every ~100 frames
-                this.velY = -10; // Slightly reduced jump height
+            // If on ground, snap to it or fall
+            if (groundFound) {
+                this.y = groundY - this.h;
+
+                // Jump Timer
+                this.jumpTimer++;
+                if (this.jumpTimer > 100) { // Jump every ~100 frames
+                    this.velY = -10;
+                    this.isGrounded = false;
+                    this.jumpTimer = 0;
+                }
+            } else {
+                // Walked off ledge
                 this.isGrounded = false;
-                this.jumpTimer = 0;
             }
         } else {
-            // Gravity
+            // Airborne Logic
             this.velY += GRAVITY;
             this.y += this.velY;
 
-            // Landing (Simple Ground Check)
-            if (typeof terrainManager !== 'undefined') {
-                for (const seg of terrainManager.segments) {
-                    const centerX = this.x + this.w / 2;
-                    if (centerX >= seg.x && centerX <= seg.x + seg.w) {
-                        if (this.y + this.h >= seg.y && this.velY > 0) {
-                            this.y = seg.y - this.h;
-                            this.velY = 0;
-                            this.isGrounded = true;
-                        }
-                        break;
-                    }
+            // Landing Check
+            if (groundFound && this.velY > 0) {
+                // Check if close enough to land
+                if (this.y + this.h >= groundY - 5 && this.y + this.h <= groundY + 20) { // Tolerance
+                    this.y = groundY - this.h;
+                    this.velY = 0;
+                    this.isGrounded = true;
                 }
             }
         }
