@@ -61,13 +61,15 @@ async function fetchLeaderboard() {
     }
 }
 
-async function submitScore() {
+async function submitScore(isAuto = false) {
     const nameInput = document.getElementById('player-name');
     const name = nameInput.value.trim() || "Anonymous";
     const btn = document.getElementById('submit-score-btn');
+    const statusMsg = document.getElementById('status-msg');
 
     btn.disabled = true;
-    btn.textContent = "Checking...";
+    if (!isAuto) btn.textContent = "Checking...";
+    statusMsg.textContent = isAuto ? "Auto-checking..." : "";
 
     try {
         // 1. Check if user already exists
@@ -81,35 +83,40 @@ async function submitScore() {
 
             if (score > existingData.score) {
                 // Update with high score
-                btn.textContent = "Updating High Score...";
+                statusMsg.textContent = "New High Score! Updating...";
                 const docRef = doc(db, "scores", existingDoc.id);
                 await updateDoc(docRef, {
                     score: score,
                     date: new Date().toISOString()
                 });
-                alert(`New High Score! Previous: ${existingData.score}`);
+                statusMsg.textContent = `New High Score Saved! (${score})`;
+                statusMsg.style.color = "red";
             } else {
-                alert(`Score not updated. Your high score is ${existingData.score}.`);
+                statusMsg.textContent = `Personal Best: ${existingData.score} (Not Updated)`;
+                statusMsg.style.color = "#555";
             }
         } else {
             // New user, add score
-            btn.textContent = "Saving...";
+            statusMsg.textContent = "Registering new player...";
             await addDoc(collection(db, "scores"), {
                 name: name,
                 score: score,
                 date: new Date().toISOString()
             });
-            alert("Score Registered!");
+            statusMsg.textContent = "Score Registered!";
+            statusMsg.style.color = "green";
         }
 
         // Save name for next time
         localStorage.setItem('chariso_username', name);
 
-        document.getElementById('score-submit-area').style.display = 'none'; // Hide input
+        // Don't hide input immediately so they see the message
+        // document.getElementById('score-submit-area').style.display = 'none'; 
         fetchLeaderboard(); // Refresh
     } catch (e) {
         console.error("Error processing score: ", e);
-        alert("Error: " + e.message);
+        if (!isAuto) alert("Error: " + e.message);
+        statusMsg.textContent = "Error saving score.";
     } finally {
         btn.disabled = false;
         btn.textContent = "Register Score";
