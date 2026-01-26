@@ -456,16 +456,17 @@ class Rabbit extends Obstacle {
         this.velY = 0;
         this.isGrounded = true;
         this.jumpTimer = Math.random() * 100; // Randomize start
+        this.speed = 2; // Move towards player
     }
 
     update() {
-        this.x -= gameSpeed;
+        this.x -= (gameSpeed + this.speed);
 
         // Jump Logic
         if (this.isGrounded) {
             this.jumpTimer++;
             if (this.jumpTimer > 100) { // Jump every ~100 frames
-                this.velY = -12; // Big Jump
+                this.velY = -10; // Slightly reduced jump height
                 this.isGrounded = false;
                 this.jumpTimer = 0;
             }
