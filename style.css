@@ -78,10 +78,15 @@ canvas {
     justify-content: flex-start;
     /* Align top so scroll works */
     padding-top: 20px;
+    padding-bottom: 20px;
+    /* Add space at bottom */
     pointer-events: auto;
+    z-index: 100;
+    /* Force overlay on top */
     transition: opacity 0.3s ease;
     overflow-y: auto;
     /* Allow scroll if content is too tall */
+    -webkit-overflow-scrolling: touch;
 }
 
 .screen.hidden {
