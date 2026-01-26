@@ -181,8 +181,7 @@ let frames = 0;
 let score = 0;
 let gameSpeed = SPEED;
 let requestId = null;
-let player;
-let terrainManager;
+// (Removed duplicates)
 
 // Resize canvas to fit container
 function resizeCanvas() {
