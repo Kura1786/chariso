@@ -1,3 +1,82 @@
+// --- Firebase Setup ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// TODO: Replace with your Firebase project config
+const firebaseConfig = {
+    apiKey: "AIzaSyBfuDxZ04aoLrZxjoJmeWivsm8V05ZfiS4",
+    authDomain: "chariso.firebaseapp.com",
+    projectId: "chariso",
+    storageBucket: "chariso.firebasestorage.app",
+    messagingSenderId: "886025257832",
+    appId: "1:886025257832:web:1a1b83180c751952b20cdd",
+    measurementId: "G-3PS2G08FNZ"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- Ranking Logic ---
+async function fetchLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    list.innerHTML = '<li>Loading...</li>';
+
+    try {
+        const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(5));
+        const querySnapshot = await getDocs(q);
+
+        list.innerHTML = '';
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.textContent = `${data.score} - ${data.name}`;
+            list.appendChild(li);
+        });
+
+        if (querySnapshot.empty) {
+            list.innerHTML = '<li>No scores yet. Be the first!</li>';
+        }
+    } catch (e) {
+        console.error("Error fetching leaderboard: ", e);
+        list.innerHTML = '<li>Error loading scores. Check Console.</li>';
+    }
+}
+
+async function submitScore() {
+    const nameInput = document.getElementById('player-name');
+    const name = nameInput.value.trim() || "Anonymous";
+    const btn = document.getElementById('submit-score-btn');
+
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    try {
+        await addDoc(collection(db, "scores"), {
+            name: name,
+            score: score,
+            date: new Date().toISOString()
+        });
+
+        alert("Score Registered!");
+        document.getElementById('score-submit-area').style.display = 'none'; // Hide input
+        fetchLeaderboard(); // Refresh
+    } catch (e) {
+        console.error("Error adding document: ", e);
+        alert("Error saving score: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Register Score";
+    }
+}
+
+// Initial Fetch
+fetchLeaderboard();
+
+// Submit Listener
+document.getElementById('submit-score-btn').addEventListener('click', submitScore);
+
+
 /**
  * Chariso Game
  * Simple endless runner
@@ -416,6 +495,10 @@ function initGame() {
     gameSpeed = SPEED;
     score = 0;
     frames = 0;
+
+    // Reset UI for ranking
+    document.getElementById('score-submit-area').style.display = 'block';
+    document.getElementById('player-name').value = '';
 }
 
 // --- Main Loop ---
