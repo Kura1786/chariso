@@ -630,12 +630,28 @@ class TerrainManager {
         this.obstacles.push(obs);
     }
 
-    // Force add obstacle (for milestones)
-    spawnSign(val) {
-        // Find rightmost segment to place it
-        const lastSeg = this.segments[this.segments.length - 1];
-        const x = lastSeg.x + lastSeg.w - 50; // Near end of generated terrain
-        this.addObstacle(new ScoreSign(x, lastSeg.y, val));
+    // Force add obstacle at precise X (for milestones)
+    spawnSignFixed(x, val) {
+        // Find segment at this X
+        let targetSeg = null;
+        for (const seg of this.segments) {
+            if (x >= seg.x && x <= seg.x + seg.w) {
+                targetSeg = seg;
+                break;
+            }
+        }
+
+        // If gap, maybe place it on nearest segment end or just float?
+        // Let's default to last segment if not found (should be rare if we spawn ahead properly)
+        if (!targetSeg && this.segments.length > 0) {
+            targetSeg = this.segments[this.segments.length - 1];
+            // If x is way beyond last segment, we might need to wait or place it at end of last seg
+            if (x > targetSeg.x + targetSeg.w) x = targetSeg.x + targetSeg.w - 50;
+        }
+
+        if (targetSeg) {
+            this.addObstacle(new ScoreSign(x, targetSeg.y, val));
+        }
     }
 
     update() {
@@ -744,7 +760,10 @@ class TerrainManager {
 }
 
 // --- Global Objects ---
+let player;
+let terrainManager;
 let lastMilestone = 0;
+let totalDistance = 0;
 
 function initGame() {
     player = new Player();
@@ -753,6 +772,7 @@ function initGame() {
     score = 0;
     frames = 0;
     lastMilestone = 0;
+    totalDistance = 0;
 
     // Reset UI for ranking
     document.getElementById('score-submit-area').style.display = 'block';
@@ -781,22 +801,42 @@ function loop() {
 function update() {
     frames++;
     gameSpeed += 0.001; // Slowly increase speed
+    totalDistance += gameSpeed;
 
-    // Update Score
-    score = Math.floor(frames / 10);
+    // Update Score (Distance / 50 seems like a good scale)
+    score = Math.floor(totalDistance / 50);
     scoreEl.textContent = score;
 
     // Milestone Check (Score Signs)
-    // Spawn earlier so it arrives roughly when score matches the number
-    // Distance from spawn (approx canvas.width + 200) to player (100) is approx canvas.width + 100
-    // Time = Distance / Speed. Score = Time / 10.
-    const nextMilestone = lastMilestone + 100;
-    const distToTravel = canvas.width + 100;
-    const scoreLead = distToTravel / gameSpeed / 10;
+    // Next target score
+    const nextMilestoneScore = lastMilestone + 100;
+    // World distance for that score
+    const targetDistance = nextMilestoneScore * 50;
 
-    if (score + scoreLead >= nextMilestone) {
-        lastMilestone = nextMilestone;
-        terrainManager.spawnSign(lastMilestone);
+    // Check if within spawn range (e.g. approaching screen right edge)
+    // player.x is usually fixed around 100.
+    // The "World X" of the right edge of screen is approx `totalDistance + canvas.width`.
+    // actually, let's keep it simple:
+    // If we are close enough to the target distance, spawn it relative to current segments.
+    // But consistent placement requires us to know exactly where that distance "is" on the moving segments.
+
+    // Strategy: calculate offset from current totalDistance.
+    // If targetDistance is 5000, and totalDistance is 4000, it is 1000px away.
+    // We want to spawn it when it is just offscreen (canvas.width + buffer).
+
+    if (totalDistance + canvas.width + 100 >= targetDistance && lastMilestone < nextMilestoneScore) {
+        lastMilestone = nextMilestoneScore;
+        // Calculate exact X position relative to current screen
+        // Sign X should be: (targetDistance - totalDistance) + player.x (roughly)
+        // Since player is at 100 (player.x), totalDistance represents 100px mark? 
+        // No, usually 0 distance is start. Player stays at 100.
+        // So World X = totalDistance + (ScreenX - player.x) ? 
+        // Let's assume start: totalDistance=0. Player at 100.
+        // Target 1000.  It arrives at player when totalDistance=1000.
+        // ScreenX = (Target - totalDistance) + 100.
+        const spawnX = (targetDistance - totalDistance) + 100; // 100 is player.x anchor
+
+        terrainManager.spawnSignFixed(spawnX, lastMilestone);
     }
 
     player.update();
