@@ -23,7 +23,7 @@ async function fetchLeaderboard() {
     list.innerHTML = '<li>Loading...</li>';
 
     try {
-        const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(5));
+        const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
         const querySnapshot = await getDocs(q);
 
         list.innerHTML = '';
@@ -592,6 +592,27 @@ class Rabbit extends Obstacle {
     }
 }
 
+class ScoreSign extends Obstacle {
+    constructor(x, y, value) {
+        super(x, y - 60, 60, 60, 'SIGN');
+        this.value = value;
+    }
+
+    draw() {
+        // Signboard
+        ctx.fillStyle = '#795548'; // Wood color
+        ctx.fillRect(this.x, this.y, 60, 40);
+        ctx.fillStyle = '#5D4037'; // Post
+        ctx.fillRect(this.x + 25, this.y + 40, 10, 20);
+
+        // Text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.value, this.x + 30, this.y + 28);
+    }
+}
+
 class TerrainManager {
     constructor() {
         this.segments = [];
@@ -607,6 +628,14 @@ class TerrainManager {
 
     addObstacle(obs) {
         this.obstacles.push(obs);
+    }
+
+    // Force add obstacle (for milestones)
+    spawnSign(val) {
+        // Find rightmost segment to place it
+        const lastSeg = this.segments[this.segments.length - 1];
+        const x = lastSeg.x + lastSeg.w - 50; // Near end of generated terrain
+        this.addObstacle(new ScoreSign(x, lastSeg.y, val));
     }
 
     update() {
@@ -715,7 +744,9 @@ class TerrainManager {
 }
 
 // --- Global Objects ---
-// (Variables moved to top)
+let player;
+let terrainManager;
+let lastMilestone = 0;
 
 function initGame() {
     player = new Player();
@@ -723,6 +754,7 @@ function initGame() {
     gameSpeed = SPEED;
     score = 0;
     frames = 0;
+    lastMilestone = 0;
 
     // Reset UI for ranking
     document.getElementById('score-submit-area').style.display = 'block';
@@ -755,6 +787,12 @@ function update() {
     // Update Score
     score = Math.floor(frames / 10);
     scoreEl.textContent = score;
+
+    // Milestone Check (Score Signs)
+    if (score >= lastMilestone + 100) {
+        lastMilestone += 100;
+        terrainManager.spawnSign(lastMilestone);
+    }
 
     player.update();
     terrainManager.update();
@@ -789,6 +827,8 @@ function checkCollision() {
 
     // Check collision with OBSTACLES
     for (const obs of terrainManager.obstacles) {
+        if (obs.type === 'SIGN') continue; // Ignore Signs
+
         // Simple AABB Collision
         if (player.x < obs.x + obs.w &&
             player.x + player.width > obs.x &&
