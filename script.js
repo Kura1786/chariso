@@ -358,6 +358,52 @@ class Player {
     }
 }
 
+class Rhino extends Obstacle {
+    constructor(x, y) {
+        // Rhino is short and wide
+        super(x, y - 35, 50, 35, 'RHINO');
+        this.chargeSpeed = 4; // Extra speed added to scrolling
+    }
+
+    update() {
+        // Moves faster than the ground (Charges at player)
+        this.x -= (gameSpeed + this.chargeSpeed);
+
+        if (this.x + this.w < 0) this.markedForDeletion = true;
+    }
+
+    draw() {
+        // Gray Body
+        ctx.fillStyle = '#9E9E9E';
+        ctx.fillRect(this.x, this.y, 50, 30);
+
+        // Legs
+        ctx.fillStyle = '#616161';
+        ctx.fillRect(this.x + 5, this.y + 30, 10, 5);
+        ctx.fillRect(this.x + 35, this.y + 30, 10, 5);
+
+        // Head/Horn area
+        ctx.fillStyle = '#BDBDBD';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - 10, this.y + 10); // Horn tip
+        ctx.lineTo(this.x, this.y + 20);
+        ctx.fill();
+
+        // Eye
+        ctx.fillStyle = 'black';
+        ctx.fillRect(this.x + 2, this.y + 5, 3, 3);
+
+        // Dust effect (simple circles behind)
+        if (frames % 10 < 5) {
+            ctx.fillStyle = '#E0E0E0';
+            ctx.beginPath();
+            ctx.arc(this.x + 55, this.y + 30, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+}
+
 class TerrainManager {
     constructor() {
         this.segments = [];
@@ -421,7 +467,6 @@ class TerrainManager {
             // Chance to spawn Bird over gap
             if (Math.random() < 0.3) {
                 // Bird flies high, but keep it on screen (min Y=50)
-                // Fix: Prevent "Ceiling Death" by clamping bird height
                 const birdY = Math.max(50, newY - 150);
                 this.addObstacle(new Bird(lastSegment.x + lastSegment.w + gapSize + newW / 2, birdY));
             }
@@ -434,12 +479,21 @@ class TerrainManager {
             const newW = 300 + Math.random() * 300; // Longer ground for obstacles
             this.addSegment(lastSegment.x + lastSegment.w, newY, newW, 400);
 
-            // Chance to spawn obstacles on ground
-            if (newW > 150 && Math.random() < 0.5) {
-                // Add Tree
-                // Place it somewhere in the middle of the segment
-                const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
-                this.addObstacle(new Tree(obsX, newY));
+            // OBSTACLE SPAWNING
+            if (newW > 150) {
+                const roll = Math.random();
+
+                // Rhino on Long Ground (High Priority)
+                if (newW > 400 && roll < 0.3) {
+                    // Charge from right side of segment
+                    const obsX = lastSegment.x + lastSegment.w + newW - 50;
+                    this.addObstacle(new Rhino(obsX, newY));
+                }
+                // Tree (Normal)
+                else if (roll < 0.6) {
+                    const obsX = lastSegment.x + lastSegment.w + 50 + Math.random() * (newW - 100);
+                    this.addObstacle(new Tree(obsX, newY));
+                }
             }
         }
     }
