@@ -166,44 +166,32 @@ class Obstacle {
     }
 }
 
-class Tree extends Obstacle {
+class Rock extends Obstacle {
     constructor(x, y) {
-        super(x, y - 50, 40, 50, 'TREE'); // Pipe sits on ground
+        super(x, y - 40, 50, 40, 'ROCK');
     }
 
     draw() {
-        // Green Pipe
-        ctx.fillStyle = '#43A047'; // Green
-        ctx.strokeStyle = '#1B5E20'; // Dark Green border
-        ctx.lineWidth = 2;
-
-        // Pipe Body
-        ctx.fillRect(this.x + 5, this.y + 20, 30, 30);
-        ctx.strokeRect(this.x + 5, this.y + 20, 30, 30);
-
-        // Pipe Rim (Top)
-        ctx.fillRect(this.x, this.y, 40, 20);
-        ctx.strokeRect(this.x, this.y, 40, 20);
-
-        // Piranha Plant (Simple)
-        // Stem
+        // Rock Visual
+        ctx.fillStyle = '#757575'; // Grey
         ctx.beginPath();
-        ctx.moveTo(this.x + 20, this.y);
-        ctx.lineTo(this.x + 20, this.y - 10);
+        ctx.moveTo(this.x, this.y + 40);
+        ctx.lineTo(this.x + 10, this.y + 10);
+        ctx.lineTo(this.x + 25, this.y); // Peak
+        ctx.lineTo(this.x + 40, this.y + 15);
+        ctx.lineTo(this.x + 50, this.y + 40);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#424242';
+        ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Head (Red with White spots)
-        ctx.fillStyle = '#E53935'; // Red
+        // Cracks
         ctx.beginPath();
-        ctx.lineTo(this.x + 35, this.y + 20);
-        ctx.fill();
-
-        // Top Layer
-        ctx.beginPath();
-        ctx.moveTo(this.x + 10, this.y + 5);
-        ctx.lineTo(this.x + 20, this.y - 20);
-        ctx.lineTo(this.x + 30, this.y + 5);
-        ctx.fill();
+        ctx.moveTo(this.x + 15, this.y + 30);
+        ctx.lineTo(this.x + 25, this.y + 15);
+        ctx.stroke();
     }
 }
 
