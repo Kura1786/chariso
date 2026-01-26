@@ -1,6 +1,6 @@
 // --- Firebase Setup ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // TODO: Replace with your Firebase project config
 const firebaseConfig = {
@@ -49,21 +49,46 @@ async function submitScore() {
     const btn = document.getElementById('submit-score-btn');
 
     btn.disabled = true;
-    btn.textContent = "Saving...";
+    btn.textContent = "Checking...";
 
     try {
-        await addDoc(collection(db, "scores"), {
-            name: name,
-            score: score,
-            date: new Date().toISOString()
-        });
+        // 1. Check if user already exists
+        const q = query(collection(db, "scores"), where("name", "==", name));
+        const querySnapshot = await getDocs(q);
 
-        alert("Score Registered!");
+        if (!querySnapshot.empty) {
+            // User exists, check if new score is higher
+            const existingDoc = querySnapshot.docs[0];
+            const existingData = existingDoc.data();
+
+            if (score > existingData.score) {
+                // Update with high score
+                btn.textContent = "Updating High Score...";
+                const docRef = doc(db, "scores", existingDoc.id);
+                await updateDoc(docRef, {
+                    score: score,
+                    date: new Date().toISOString()
+                });
+                alert(`New High Score! Previous: ${existingData.score}`);
+            } else {
+                alert(`Score not updated. Your high score is ${existingData.score}.`);
+            }
+        } else {
+            // New user, add score
+            btn.textContent = "Saving...";
+            await addDoc(collection(db, "scores"), {
+                name: name,
+                score: score,
+                date: new Date().toISOString()
+            });
+            alert("Score Registered!");
+        }
+
         document.getElementById('score-submit-area').style.display = 'none'; // Hide input
         fetchLeaderboard(); // Refresh
     } catch (e) {
-        console.error("Error adding document: ", e);
-        alert("Error saving score: " + e.message);
+        console.error("Error processing score: ", e);
+        alert("Error: " + e.message);
     } finally {
         btn.disabled = false;
         btn.textContent = "Register Score";
